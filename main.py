@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 import argparse
-import numpy as np
-from pprint import pprint
 
 from PIL import Image
 import matplotlib.pyplot as plt
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import grad
 import torchvision
-from torchvision import models, datasets, transforms
+from torchvision import datasets, transforms
 print(torch.__version__, torchvision.__version__)
 
 from utils import label_to_onehot, cross_entropy_for_onehot
@@ -29,27 +25,27 @@ if torch.cuda.is_available():
 print("Running on %s" % device)
 
 dst = datasets.CIFAR100("~/.torch", download=True)
-tp = transforms.ToTensor()
-tt = transforms.ToPILImage()
+tt = transforms.ToTensor()
+tp = transforms.ToPILImage()
 
 img_index = args.index
-gt_data = tp(dst[img_index][0]).to(device)
+gt_data = tt(dst[img_index][0]).to(device)
 
 if len(args.image) > 1:
     gt_data = Image.open(args.image)
-    gt_data = tp(gt_data).to(device)
+    gt_data = tt(gt_data).to(device)
 
-
+print ("image index:", img_index, "image size:", *gt_data.size())
 gt_data = gt_data.view(1, *gt_data.size())
+
 gt_label = torch.Tensor([dst[img_index][1]]).long().to(device)
 gt_label = gt_label.view(1, )
 gt_onehot_label = label_to_onehot(gt_label)
 
-plt.imshow(tt(gt_data[0].cpu()))
+plt.imshow(tp(gt_data[0].cpu()))
 
 from models.vision import LeNet, weights_init
 net = LeNet().to(device)
-
 
 torch.manual_seed(1234)
 
@@ -67,13 +63,12 @@ original_dy_dx = list((_.detach().clone() for _ in dy_dx))
 dummy_data = torch.randn(gt_data.size()).to(device).requires_grad_(True)
 dummy_label = torch.randn(gt_onehot_label.size()).to(device).requires_grad_(True)
 
-plt.imshow(tt(dummy_data[0].cpu()))
+plt.imshow(tp(dummy_data[0].cpu()))
 
 optimizer = torch.optim.LBFGS([dummy_data, dummy_label])
 
-
 history = []
-for iters in range(300):
+for iters in range(50):
     def closure():
         optimizer.zero_grad()
 
@@ -93,10 +88,10 @@ for iters in range(300):
     if iters % 10 == 0: 
         current_loss = closure()
         print(iters, "%.4f" % current_loss.item())
-        history.append(tt(dummy_data[0].cpu()))
+        history.append(tp(dummy_data[0].cpu()))
 
 plt.figure(figsize=(12, 8))
-for i in range(30):
+for i in range(5):
     plt.subplot(3, 10, i + 1)
     plt.imshow(history[i])
     plt.title("iter=%d" % (i * 10))

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import time
 import os
 import numpy as np
@@ -6,9 +7,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 from torchvision import datasets, transforms
-import pickle
 import PIL.Image as Image
-
 
 class LeNet(nn.Module):
     def __init__(self, channel=3, hideen=768, num_classes=10):
@@ -82,15 +81,16 @@ def lfw_dataset(lfw_path, shape_img):
 
 
 def main():
-    dataset = 'lfw'
-    root_path = '.'
-    data_path = os.path.join(root_path, '../data').replace('\\', '/')
-    save_path = os.path.join(root_path, 'results/iDLG_%s'%dataset).replace('\\', '/')
+    dataset = 'cifar100'
+    data_path = '~/.torch'
+    # on linux, dataset/lfw-deepfunneled
+    lfw_path = os.path.join(os.path.abspath('../../'), 'dataset\lfw-deepfunneled')
+    save_path = 'results\iDLG_%s'%dataset
     
     lr = 1.0
     num_dummy = 1
-    Iteration = 300
-    num_exp = 1000
+    Iteration = 100
+    num_exp = 1
 
     use_cuda = torch.cuda.is_available()
     device = 'cuda' if use_cuda else 'cpu'
@@ -98,15 +98,17 @@ def main():
     tt = transforms.Compose([transforms.ToTensor()])
     tp = transforms.Compose([transforms.ToPILImage()])
 
-    print(dataset, 'root_path:', root_path)
-    print(dataset, 'data_path:', data_path)
-    print(dataset, 'save_path:', save_path)
-
+    print('dataset:', dataset)
+    print('data_path:', data_path)
+    print('lfw_path:', lfw_path)
+    print('save_path:', save_path)
+    
     if not os.path.exists('results'):
         os.mkdir('results')
     if not os.path.exists(save_path):
         os.mkdir(save_path)
-
+    if not os.path.exists(lfw_path):
+       print('not found lfw dataset')
 
 
     ''' load data '''
@@ -115,14 +117,14 @@ def main():
         num_classes = 10
         channel = 1
         hidden = 588
-        dst = datasets.MNIST(data_path, download=False)
+        dst = datasets.MNIST(data_path, download=True)
 
     elif dataset == 'cifar100':
         shape_img = (32, 32)
         num_classes = 100
         channel = 3
         hidden = 768
-        dst = datasets.CIFAR100(data_path, download=False)
+        dst = datasets.CIFAR100(data_path, download=True)
 
 
     elif dataset == 'lfw':
@@ -130,13 +132,10 @@ def main():
         num_classes = 5749
         channel = 3
         hidden = 768
-        lfw_path = os.path.join(root_path, '../data/lfw')
         dst = lfw_dataset(lfw_path, shape_img)
 
     else:
         exit('unknown dataset')
-
-
 
 
     ''' train DLG and iDLG '''
@@ -192,7 +191,6 @@ def main():
             mses = []
             train_iters = []
 
-            print('lr =', lr)
             for iters in range(Iteration):
 
                 def closure():
@@ -217,7 +215,6 @@ def main():
                 train_iters.append(iters)
                 losses.append(current_loss)
                 mses.append(torch.mean((dummy_data-gt_data)**2).item())
-
 
                 if iters % int(Iteration / 30) == 0:
                     current_time = str(time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime()))
@@ -253,8 +250,6 @@ def main():
                 label_iDLG = label_pred.item()
                 mse_iDLG = mses
 
-
-
         print('imidx_list:', imidx_list)
         print('loss_DLG:', loss_DLG[-1], 'loss_iDLG:', loss_iDLG[-1])
         print('mse_DLG:', mse_DLG[-1], 'mse_iDLG:', mse_iDLG[-1])
@@ -264,5 +259,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
