@@ -1,1 +1,1 @@
-## iDLG: Improved Deep Leakage from Gradients, arXiv20
+iDLG: Improved Deep Leakage from Gradients, arXiv20
