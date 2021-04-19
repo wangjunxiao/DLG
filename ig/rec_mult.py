@@ -42,7 +42,7 @@ defs = inversefed.training_strategy('conservative')
 defs.epochs = args.epochs
 # 100% reproducibility?
 if args.deterministic:
-    image2graph2vec.utils.set_deterministic()
+    inversefed.utils.set_deterministic()
 
 
 if __name__ == "__main__":

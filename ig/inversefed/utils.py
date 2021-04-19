@@ -16,15 +16,19 @@ def system_startup(args=None, defs=None):
     # Choose GPU device and print status information:
     device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     setup = dict(device=device, dtype=torch.float)  # non_blocking=NON_BLOCKING
-    print('Currently evaluating -------------------------------:')
+    print('-------------------------------') # Current time
     print(datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p"))
+    print('-------------------------------') # Device info
     print(f'CPUs: {torch.get_num_threads()}, GPUs: {torch.cuda.device_count()} on {socket.gethostname()}.')
-    if args is not None:
-        print(args)
-    if defs is not None:
-        print(repr(defs))
     if torch.cuda.is_available():
         print(f'GPU : {torch.cuda.get_device_name(device=device)}')
+    print('-------------------------------')
+    if args is not None:
+        print(args)
+        print('-------------------------------')
+    if defs is not None:
+        print(repr(defs))
+        print('-------------------------------')
     return setup
 
 def save_to_table(out_dir, name, dryrun, **kwargs):
@@ -35,16 +39,7 @@ def save_to_table(out_dir, name, dryrun, **kwargs):
     fname = os.path.join(out_dir, f'table_{name}.csv')
     fieldnames = list(kwargs.keys())
 
-    # Read or write header
-    try:
-        with open(fname, 'r') as f:
-            reader = csv.reader(f, delimiter='\t')
-            header = [line for line in reader][0]
-    except Exception as e:
-        print('Creating a new .csv table...')
-        with open(fname, 'w') as f:
-            writer = csv.DictWriter(f, delimiter='\t', fieldnames=fieldnames)
-            writer.writeheader()
+    # write header
     if not dryrun:
         # Add row for this experiment
         with open(fname, 'a') as f:

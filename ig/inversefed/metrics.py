@@ -66,11 +66,8 @@ def activation_errors(model, x1, x2):
     """Compute activation-level error metrics for every module in the network."""
     model.eval()
 
-    device = next(model.parameters()).device
-
     hooks = []
     data = defaultdict(dict)
-    inputs = torch.cat((x1, x2), dim=0)
     separator = x1.shape[0]
 
     def check_activations(self, input, output):
@@ -95,10 +92,9 @@ def activation_errors(model, x1, x2):
         hooks.append(module.register_forward_hook(check_activations))
 
     try:
-        outputs = model(inputs.to(device))
         for hook in hooks:
             hook.remove()
-    except Exception as e:
+    except Exception:
         for hook in hooks:
             hook.remove()
         raise

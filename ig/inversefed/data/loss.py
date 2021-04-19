@@ -20,12 +20,12 @@ class Loss:
     def __call__(self, reference, argmin):
         """Return l(x, y)."""
         raise NotImplementedError()
-        return value, name, format
+        # return value, name, format
 
     def metric(self, reference, argmin):
         """The actually sought metric."""
         raise NotImplementedError()
-        return value, name, format
+        # return value, name, format
 
 
 class PSNR(Loss):

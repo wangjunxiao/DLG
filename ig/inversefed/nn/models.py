@@ -7,6 +7,7 @@ import torch.nn as nn
 from torchvision.models.resnet import Bottleneck
 from .revnet import iRevNet
 from .densenet import _DenseNet, _Bottleneck
+from .srnet import Srnet as SRNet
 
 from collections import OrderedDict
 import numpy as np
@@ -223,7 +224,7 @@ class ResNet(torchvision.models.ResNet):
             for m in self.modules():
                 if isinstance(m, Bottleneck):
                     nn.init.constant_(m.bn3.weight, 0)
-                elif isinstance(m, BasicBlock):
+                elif isinstance(m, torchvision.models.resnet.BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
 

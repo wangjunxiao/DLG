@@ -43,7 +43,7 @@ def options():
     parser.add_argument('--image_path', default='images/', type=str)
     parser.add_argument('--model_path', default='models/', type=str)
     parser.add_argument('--table_path', default='tables/', type=str)
-    parser.add_argument('--data_path', default='~/data', type=str)
+    parser.add_argument('--data_path', default='~/.torch', type=str)
 
     # Debugging:
     parser.add_argument('--name', default='iv', type=str, help='Name tag for the result table and model.')

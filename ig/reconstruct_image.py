@@ -27,10 +27,9 @@ defs.epochs = args.epochs
 if args.deterministic:
     inversefed.utils.set_deterministic()
 
-
 if __name__ == "__main__":
     # Choose GPU device and print status information:
-    setup = inversefed.utils.system_startup(args)
+    setup = inversefed.utils.system_startup(args, defs)
     start_time = time.time()
 
     # Prepare for training

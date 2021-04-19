@@ -32,7 +32,6 @@ class MetaMonkey(torch.nn.Module):
         # But if not ...
         param_gen = iter(parameters.values())
         method_pile = []
-        counter = 0
 
         for name, module in self.net.named_modules():
             if isinstance(module, torch.nn.Conv2d):
