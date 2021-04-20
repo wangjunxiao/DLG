@@ -62,7 +62,7 @@ if __name__ == "__main__":
     if args.num_images == 1:
         if args.target_id == -1:  # demo image
             # Specify PIL filter for lower pillow versions
-            ground_truth = torch.as_tensor(np.array(Image.open("auto.jpg").resize((32, 32), Image.BICUBIC)) / 255, **setup)
+            ground_truth = torch.as_tensor(np.array(Image.open("other_picture.jpg").resize((32, 32), Image.BICUBIC)) / 255, **setup)
             ground_truth = ground_truth.permute(2, 0, 1).sub(dm).div(ds).unsqueeze(0).contiguous()
             if not args.label_flip:
                 labels = torch.as_tensor((1,), device=setup['device'])
