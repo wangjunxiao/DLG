@@ -11,7 +11,6 @@ from PIL import Image
 
 import inversefed
 
-from collections import defaultdict
 import datetime
 import time
 import os
@@ -36,7 +35,7 @@ if __name__ == "__main__":
 
     # Get data:
     loss_fn, trainloader, validloader = inversefed.construct_dataloaders(args.dataset, defs, data_path=args.data_path)
-
+    print('-------------------------------')
     dm = torch.as_tensor(getattr(inversefed.consts, f'{args.dataset.lower()}_mean'), **setup)[:, None, None]
     ds = torch.as_tensor(getattr(inversefed.consts, f'{args.dataset.lower()}_std'), **setup)[:, None, None]
 
@@ -48,11 +47,13 @@ if __name__ == "__main__":
         model_seed = None
     else:
         model, model_seed = inversefed.construct_model(args.model, num_classes=10, num_channels=3)
+    print('-------------------------------')
     model.to(**setup)
     model.eval()
 
     # Sanity check: Validate model accuracy
-    training_stats = defaultdict(list)
+    # from collections import defaultdict
+    # training_stats = defaultdict(list)
     # inversefed.training.training_routine.validate(model, loss_fn, validloader, defs, setup, training_stats)
     # name, format = loss_fn.metric()
     # print(f'Val loss is {training_stats["valid_losses"][-1]:6.4f}, Val {name}: {training_stats["valid_" + name][-1]:{format}}.')
@@ -106,7 +107,7 @@ if __name__ == "__main__":
         input_gradient = [grad.detach() for grad in input_gradient]
         full_norm = torch.stack([g.norm() for g in input_gradient]).mean()
         print(f'Full gradient norm is {full_norm:e}.')
-
+        print('-------------------------------')
         # Run reconstruction in different precision?
         if args.dtype != 'float':
             if args.dtype in ['double', 'float64']:

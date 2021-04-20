@@ -16,15 +16,12 @@ from ..utils import set_random_seed
 
 
 
-def construct_model(model, num_classes=10, seed=None, num_channels=3, modelkey=None):
+def construct_model(model, num_classes=10, seed=None, num_channels=3):
     """Return various models."""
-    if modelkey is None:
-        if seed is None:
-            model_init_seed = np.random.randint(0, 2**32 - 10)
-        else:
-            model_init_seed = seed
+    if seed is None:
+        model_init_seed = np.random.randint(0, 2**32 - 10, dtype=np.int64)
     else:
-        model_init_seed = modelkey
+        model_init_seed = seed
     set_random_seed(model_init_seed)
 
     if model in ['ConvNet', 'ConvNet64']:
@@ -169,6 +166,7 @@ def construct_model(model, num_classes=10, seed=None, num_channels=3, modelkey=N
         raise NotImplementedError('Model not implemented.')
 
     print(f'Model initialized with random key {model_init_seed}.')
+    
     return model, model_init_seed
 
 
