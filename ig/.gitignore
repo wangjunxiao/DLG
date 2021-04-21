@@ -2,3 +2,6 @@
 /tables
 /models
 /inversefed/__pycache__
+/inversefed/data/__pycache__
+/inversefed/nn/__pycache__
+/inversefed/training/__pycache__
