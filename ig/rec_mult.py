@@ -26,7 +26,7 @@ parser = inversefed.options()
 parser.add_argument('--unsigned', action='store_true', help='Use signed gradient descent')
 parser.add_argument('--soft_labels', action='store_true', help='Do not use the provided label when using L-BFGS (This can stabilize it).')
 parser.add_argument('--lr', default=None, type=float, help='Optionally overwrite default step sizes.')
-parser.add_argument('--num_exp', default=10, type=int, help='Number of consecutive experiments')
+parser.add_argument('--num_exp', default=1, type=int, help='Number of consecutive experiments')
 parser.add_argument('--max_iterations', default=4800, type=int, help='Maximum number of iterations for reconstruction.')
 parser.add_argument('--batch_size', default=0, type=int, help='Number of mini batch for federated averaging')
 parser.add_argument('--local_lr', default=1e-4, type=float, help='Local learning rate for federated averaging')
@@ -54,8 +54,9 @@ if __name__ == "__main__":
 
     # Get data:
     loss_fn, trainloader, validloader = inversefed.construct_dataloaders(args.dataset, defs)
-
+    print('-------------------------------')
     model, model_seed = inversefed.construct_model(args.model, num_classes=10, num_channels=3)
+    print('-------------------------------')
     dm = torch.as_tensor(getattr(inversefed.consts, f'{args.dataset.lower()}_mean'), **setup)[:, None, None]
     ds = torch.as_tensor(getattr(inversefed.consts, f'{args.dataset.lower()}_std'), **setup)[:, None, None]
     model.to(**setup)
@@ -78,7 +79,8 @@ if __name__ == "__main__":
     inversefed.training.training_routine.validate(model, loss_fn, validloader, defs, setup, training_stats)
     name, format = loss_fn.metric()
     print(f'Val loss is {training_stats["valid_losses"][-1]:6.4f}, Val {name}: {training_stats["valid_" + name][-1]:{format}}.')
-
+    print('-------------------------------')
+    
     if args.optim == 'ours':
         config = dict(signed=args.signed,
                       boxed=True,
@@ -128,6 +130,7 @@ if __name__ == "__main__":
     config_hash = hashlib.md5(json.dumps(config_comp, sort_keys=True).encode()).hexdigest()
 
     print(config_comp)
+    print('-------------------------------')
 
     os.makedirs('results', exist_ok=True)
     os.makedirs(f'results/{config_hash}', exist_ok=True)
