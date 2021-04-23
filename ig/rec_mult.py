@@ -265,11 +265,17 @@ if __name__ == "__main__":
         # Save the resulting image
         if args.save_image and not args.dryrun:
             output_denormalized = torch.clamp(output * ds + dm, 0, 1)
+            gt_denormalized = torch.clamp(ground_truth * ds + dm, 0, 1)
             for j in range(args.num_images):
-                filename = (f'{i*args.num_images+j}.png')
-
+                rec_filename = (f'{i*args.num_images+j}_rec.png')
+                
                 torchvision.utils.save_image(output_denormalized[j:j + 1, ...],
-                                             os.path.join(f'results/{config_hash}', filename))
+                                             os.path.join(f'results/{config_hash}', rec_filename))
+                
+                gt_filename = (f'{i*args.num_images+j}_ground_truth.png')
+                torchvision.utils.save_image(gt_denormalized[j:j + 1, ...],
+                                             os.path.join(f'results/{config_hash}', gt_filename))
+            
 
         # Save psnr values
         psnrs.append(test_psnr)
