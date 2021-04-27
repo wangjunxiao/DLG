@@ -19,7 +19,11 @@ import os
 import json
 import hashlib
 import csv
+import random
+import math
 
+import matplotlib.pyplot as plt
+from PIL import Image
 
 # Parse input arguments
 parser = inversefed.options()
@@ -142,7 +146,7 @@ if __name__ == "__main__":
         if args.num_images == 1:
             ground_truth, labels = validloader.dataset[target_id]
             if args.label_flip:
-                labels = torch.randint((10,))
+                labels = random.randint(0,9)
             ground_truth, labels = ground_truth.unsqueeze(0).to(**setup), torch.as_tensor((labels,), device=setup['device'])
             target_id_ = target_id + 1
         else:
@@ -150,15 +154,17 @@ if __name__ == "__main__":
             target_id_ = target_id
             while len(labels) < args.num_images:
                 img, label = validloader.dataset[target_id_]
+                if args.label_flip:
+                    label = random.randint(0,9)
                 target_id_ += 1
-                if label not in labels:
-                    labels.append(torch.as_tensor((label,), device=setup['device']))
-                    ground_truth.append(img.to(**setup))
-
+                #if label not in labels:
+                #    labels.append(torch.as_tensor((label,), device=setup['device']))
+                #    ground_truth.append(img.to(**setup))
+                labels.append(torch.as_tensor((label,), device=setup['device']))
+                ground_truth.append(img.to(**setup))
+    
             ground_truth = torch.stack(ground_truth)
             labels = torch.cat(labels)
-            if args.label_flip:
-                labels = torch.permute(labels)
         img_shape = (3, ground_truth.shape[2], ground_truth.shape[3])
 
         # Run reconstruction
@@ -221,6 +227,7 @@ if __name__ == "__main__":
                                                          local_lr, config,
                                                          num_images=args.num_images, use_updates=True,
                                                          batch_size=batch_size)
+  
             output, stats = rec_machine.reconstruct(input_parameters, labels, img_shape=img_shape, dryrun=args.dryrun)
 
 
@@ -307,7 +314,7 @@ if __name__ == "__main__":
         with open('results/table_configs.csv') as csvfile:
             reader = csv.reader(csvfile, delimiter='\t')
             for row in reader:
-                if row[-1] == config_hash:
+                if row == config_hash:
                     config_exists = True
                     break
 
@@ -328,3 +335,22 @@ if __name__ == "__main__":
     print('---------------------------------------------------')
     print(f'Finished computations with time: {str(datetime.timedelta(seconds=time.time() - start_time))}')
     print('-------------Job finished.-------------------------')
+    
+    # plot the resulting image
+    gt_name = 'ground_truth'
+    rec_name = 'rec'
+    col_num = 10
+    row_num = math.ceil(args.num_images/col_num)
+    for image_plot in range(args.num_images):
+        gt_file = Image.open(os.path.join(f'results/{config_hash}/', f'{image_plot}_{gt_name}.png'))
+        rec_file = Image.open(os.path.join(f'results/{config_hash}/', f'{image_plot}_{rec_name}.png'))
+        plt.subplot(2*row_num,col_num,image_plot+1), plt.title(f'{labels[image_plot]}')
+        plt.imshow(gt_file), plt.axis('off')
+        plt.subplot(2*row_num,col_num,row_num*col_num+image_plot+1)
+        plt.imshow(rec_file), plt.axis('off')
+    plt.savefig('results/plot_result.pdf')
+        
+        
+        
+        
+    
