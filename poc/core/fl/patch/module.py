@@ -1,18 +1,15 @@
-"""For monkey-patching into meta-learning frameworks."""
+"""Trace a networks and then replace its module calls with functional calls."""
 import torch
+torch.backends.cudnn.benchmark = True
 import torch.nn.functional as F
 from collections import OrderedDict
 from functools import partial
 import warnings
 
-from ..consts import BENCHMARK
-torch.backends.cudnn.benchmark = BENCHMARK
-
 DEBUG = False  # Emit warning messages when patching. Use this to bootstrap new architectures.
 
-class MetaMonkey(torch.nn.Module):
-    """Trace a networks and then replace its module calls with functional calls.
-
+class PatchedModule(torch.nn.Module):
+    """
     This allows for backpropagation w.r.t to weights for "normal" PyTorch networks.
     """
 

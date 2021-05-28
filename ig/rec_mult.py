@@ -7,18 +7,14 @@ This CLI can recover the baseline experiments.
 import torch
 import torchvision
 
-import numpy as np
-
 import inversefed
 torch.backends.cudnn.benchmark = inversefed.consts.BENCHMARK
 
-from collections import defaultdict
 import datetime
 import time
 import os
 import json
 import hashlib
-import csv
 import random
 import math
 
@@ -31,7 +27,7 @@ parser.add_argument('--unsigned', action='store_true', help='Use signed gradient
 parser.add_argument('--soft_labels', action='store_true', help='Do not use the provided label when using L-BFGS (This can stabilize it).')
 parser.add_argument('--lr', default=None, type=float, help='Optionally overwrite default step sizes.')
 parser.add_argument('--num_exp', default=1, type=int, help='Number of consecutive experiments')
-parser.add_argument('--max_iterations', default=4800, type=int, help='Maximum number of iterations for reconstruction.')
+parser.add_argument('--max_iterations', default=10, type=int, help='Maximum number of iterations for reconstruction.')
 parser.add_argument('--batch_size', default=0, type=int, help='Number of mini batch for federated averaging')
 parser.add_argument('--local_lr', default=1e-4, type=float, help='Local learning rate for federated averaging')
 args = parser.parse_args()
@@ -79,11 +75,11 @@ if __name__ == "__main__":
             torch.save(model.state_dict(), os.path.join(args.model_path, file))
 
     # Sanity check: Validate model accuracy
-    training_stats = defaultdict(list)
-    inversefed.training.training_routine.validate(model, loss_fn, validloader, defs, setup, training_stats)
-    name, format = loss_fn.metric()
-    print(f'Val loss is {training_stats["valid_losses"][-1]:6.4f}, Val {name}: {training_stats["valid_" + name][-1]:{format}}.')
-    print('-------------------------------')
+    #training_stats = defaultdict(list)
+    #inversefed.training.training_routine.validate(model, loss_fn, validloader, defs, setup, training_stats)
+    #name, format = loss_fn.metric()
+    #print(f'Val loss is {training_stats["valid_losses"][-1]:6.4f}, Val {name}: {training_stats["valid_" + name][-1]:{format}}.')
+    #print('-------------------------------')
     
     if args.optim == 'ours':
         config = dict(signed=args.signed,
@@ -240,35 +236,6 @@ if __name__ == "__main__":
         test_psnr = inversefed.metrics.psnr(output_den, ground_truth_den, factor=1)
         print(f"Rec. loss: {stats['opt']:2.4f} | MSE: {test_mse:2.4f} | PSNR: {test_psnr:4.2f} | FMSE: {feat_mse:2.4e} |")
 
-        inversefed.utils.save_to_table(f'results/{config_hash}', name=f'mul_exp_{args.name}', dryrun=args.dryrun,
-
-                                       config_hash=config_hash,
-                                       model=args.model,
-                                       dataset=args.dataset,
-                                       trained=args.trained_model,
-                                       accumulation=args.accumulation,
-                                       restarts=args.restarts,
-                                       OPTIM=args.optim,
-                                       cost_fn=args.cost_fn,
-                                       indices=args.indices,
-                                       weights=args.weights,
-                                       scoring=args.scoring_choice,
-                                       init=args.init,
-                                       tv=args.tv,
-
-                                       rec_loss=stats["opt"],
-                                       psnr=test_psnr,
-                                       test_mse=test_mse,
-                                       feat_mse=feat_mse,
-
-                                       target_id=target_id,
-                                       seed=model_seed,
-                                       dtype=setup['dtype'],
-                                       epochs=defs.epochs,
-                                       val_acc=training_stats["valid_" + name][-1],
-                                       )
-
-
         # Save the resulting image
         if args.save_image and not args.dryrun:
             output_denormalized = torch.clamp(output * ds + dm, 0, 1)
@@ -290,45 +257,6 @@ if __name__ == "__main__":
 
         # Update target id
         target_id = target_id_
-
-
-    # psnr statistics
-    psnrs = np.nan_to_num(np.array(psnrs))
-    psnr_mean = psnrs.mean()
-    psnr_std = np.std(psnrs)
-    psnr_max = psnrs.max()
-    psnr_min = psnrs.min()
-    psnr_median = np.median(psnrs)
-    timing = datetime.timedelta(seconds=time.time() - start_time)
-    inversefed.utils.save_to_table(f'results/{config_hash}', name='psnr_stats', dryrun=args.dryrun,
-                                   number_of_samples=len(psnrs),
-                                   timing=str(timing),
-                                   mean=psnr_mean,
-                                   std=psnr_std,
-                                   max=psnr_max,
-                                   min=psnr_min,
-                                   median=psnr_median)
-
-    config_exists = False
-    if os.path.isfile('results/table_configs.csv'):
-        with open('results/table_configs.csv') as csvfile:
-            reader = csv.reader(csvfile, delimiter='\t')
-            for row in reader:
-                if row == config_hash:
-                    config_exists = True
-                    break
-
-    if not config_exists:
-        inversefed.utils.save_to_table('results', name='configs', dryrun=args.dryrun,
-                                       config_hash=config_hash,
-                                       **config_comp,
-                                       number_of_samples=len(psnrs),
-                                       timing=str(timing),
-                                       mean=psnr_mean,
-                                       std=psnr_std,
-                                       max=psnr_max,
-                                       min=psnr_min,
-                                       median=psnr_median)
 
     # Print final timestamp
     print(datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p"))

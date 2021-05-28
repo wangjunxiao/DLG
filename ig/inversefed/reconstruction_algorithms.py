@@ -25,11 +25,6 @@ DEFAULT_CONFIG = dict(signed=False,
                       lr_decay=True,
                       scoring_choice='loss')
 
-def _label_to_onehot(target, num_classes=100):
-    target = torch.unsqueeze(target, 1)
-    onehot_target = torch.zeros(target.size(0), num_classes, device=target.device)
-    onehot_target.scatter_(1, target, 1)
-    return onehot_target
 
 def _validate_config(config):
     for key in DEFAULT_CONFIG.keys():
@@ -267,6 +262,7 @@ class FedAvgReconstructor(GradientReconstructor):
                                     local_steps=self.local_steps, lr=self.local_lr,
                                     use_updates=self.use_updates,
                                     batch_size=self.batch_size)
+
             rec_loss = reconstruction_costs([parameters], input_parameters,
                                             cost_fn=self.config['cost_fn'], indices=self.config['indices'],
                                             weights=self.config['weights'])
@@ -314,11 +310,11 @@ def loss_steps(model, inputs, labels, loss_fn=torch.nn.CrossEntropyLoss(), lr=1e
         patched_model.parameters = OrderedDict((name, param - lr * grad_part)
                                                for ((name, param), grad_part)
                                                in zip(patched_model.parameters.items(), grad))
-
     if use_updates:
         patched_model.parameters = OrderedDict((name, param - param_origin)
                                                for ((name, param), (name_origin, param_origin))
                                                in zip(patched_model.parameters.items(), patched_model_origin.parameters.items()))
+
     return list(patched_model.parameters.values())
 
 

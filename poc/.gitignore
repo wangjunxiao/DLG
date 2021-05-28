@@ -1,8 +1,9 @@
-/images
-/tables
 /models
 /results
-/inversefed/__pycache__
-/inversefed/data/__pycache__
-/inversefed/nn/__pycache__
-/inversefed/training/__pycache__
+/core/__pycache__
+/core/fl/__pycache__
+/core/fl/patch/__pycache__
+/core/loader/__pycache__
+/core/loader/network/__pycache__
+/core/reconstruction/__pycache__
+/core/trainer/__pycache__

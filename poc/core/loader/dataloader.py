@@ -14,13 +14,11 @@ import os
 from os import makedirs, remove, listdir
 from os.path import exists, join, basename
 
-from loss import Classification, PSNR
-
+from .loss import Classification, PSNR
 
 
 MULTITHREAD_DATAPROCESSING = 4
 PIN_MEMORY = True
-batchsize = 128
 
 cifar10_mean = [0.4914672374725342, 0.4822617471218109, 0.4467701315879822]
 cifar10_std = [0.24703224003314972, 0.24348513782024384, 0.26158785820007324]
@@ -32,25 +30,35 @@ imagenet_mean = [0.485, 0.456, 0.406]
 imagenet_std = [0.229, 0.224, 0.225]
 
 
-def load_dataset(dataset, data_path, augmentations=True, shuffle=True, normalize=True):
+def load_dataset(dataset, data_path, batchsize=128, augmentations=True, shuffle=True, normalize=True):
     """Return a dataloader with given dataset and augmentation, normalize data?."""
     path = os.path.expanduser(data_path)
 
     if dataset == 'CIFAR10':
         trainset, validset = _build_cifar10(path, augmentations, normalize)
         loss_fn = Classification()
+        dm = cifar10_mean
+        ds = cifar10_std
     elif dataset == 'CIFAR100':
         trainset, validset = _build_cifar100(path, augmentations, normalize)
         loss_fn = Classification()
+        dm = cifar100_mean
+        ds = cifar100_std
     elif dataset == 'MNIST':
         trainset, validset = _build_mnist(path, augmentations, normalize)
         loss_fn = Classification()
+        dm = mnist_mean
+        ds = mnist_std
     elif dataset == 'MNIST_GRAY':
         trainset, validset = _build_mnist_gray(path, augmentations, normalize)
         loss_fn = Classification()
+        dm = mnist_mean
+        ds = mnist_std
     elif dataset == 'ImageNet':
         trainset, validset = _build_imagenet(path, augmentations, normalize)
         loss_fn = Classification()
+        dm = imagenet_mean
+        ds = imagenet_std
     elif dataset == 'BSDS-SR':
         trainset, validset = _build_bsds_sr(path, augmentations, normalize, upscale_factor=3, RGB=True)
         loss_fn = PSNR()
@@ -71,7 +79,7 @@ def load_dataset(dataset, data_path, augmentations=True, shuffle=True, normalize
     validloader = torch.utils.data.DataLoader(validset, batch_size=min(batchsize, len(validset)),
                                               shuffle=False, drop_last=False, num_workers=num_workers, pin_memory=PIN_MEMORY)
 
-    return loss_fn, trainloader, validloader
+    return dm, ds, loss_fn, trainloader, validloader
 
 
 def _build_cifar10(data_path, augmentations=True, normalize=True):

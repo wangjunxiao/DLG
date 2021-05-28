@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class Srnet(nn.Module):
+class SRNet(nn.Module):
 	def __init__(self):
-		super(Srnet, self).__init__()
+		super(SRNet, self).__init__()
 		# Layer 1
 		self.layer1 = nn.Conv2d(in_channels=1, out_channels=64,
 			kernel_size=3, stride=1, padding=1, bias=False)

@@ -30,7 +30,13 @@ def system_startup(args=None):
 
 
 
-def set_deterministic(seed=0):
+def set_deterministic():
+    """Switch pytorch into a deterministic computation mode."""
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    
+
+def set_random_seed(seed=0):
     """sets the seed for generating random numbers."""
     torch.manual_seed(seed + 1) 
     """sets the seed for generating random numbers for the current GPU. 
@@ -44,28 +50,3 @@ def set_deterministic(seed=0):
     
     random.seed(seed + 4)
     np.random.seed(seed + 5)
-    
-    """Switch pytorch into a deterministic computation mode."""
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    
-    
-    
-def save_to_table(out_dir, name, dryrun, **kwargs):
-    """Save keys to .csv files. Function adapted from Micah."""
-    # Check for file
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
-    fname = os.path.join(out_dir, f'table_{name}.csv')
-    fieldnames = list(kwargs.keys())
-
-    # write header
-    if not dryrun:
-        # Add row for this experiment
-        with open(fname, 'a') as f:
-            writer = csv.DictWriter(f, delimiter='\t', fieldnames=fieldnames)
-            writer.writerow(kwargs)
-        print('\nResults saved to ' + fname + '.')
-    else:
-        print(f'Would save results to {fname}.')
-        print(f'Would save these keys: {fieldnames}.')
