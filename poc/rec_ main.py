@@ -54,18 +54,17 @@ args.target_id = 0 # image index in validation dataset
 
 args.num_images = 4
 args.local_epochs = 1
-args.local_batchsize = 2
+args.local_batchsize = 4
 args.local_lr = 1e-4
 args.local_loss = 'CrossEntropy'
 
 args.max_iterations = 500
-args.rec_method = 'InvertingGradients'
 args.rec_optimizer = 'adam'
 args.rec_lossfn = 'sim'
 args.rec_lr = 0.1
 args.predict_labels = True
 args.init = 'randn'
-args.indices = 'def'
+args.indices = 'last2-conv'
 args.weights = 'equal'
 
 args.tv = 1e-4
@@ -121,8 +120,7 @@ if __name__ == "__main__":
     
     
     # collect reconstruction config
-    if args.rec_method == 'InvertingGradients':
-        rec_config = dict(init=args.init,
+    rec_config = dict(init=args.init,
                       signed=args.signed,
                       boxed=args.boxed,
                       rec_lossfn=args.rec_lossfn,
@@ -137,22 +135,7 @@ if __name__ == "__main__":
                       filter='none',
                       lr_decay=True,
                       scoring_choice=args.scoring_choice)
-    elif args.rec_method == 'DLG':
-        rec_config = dict(init=args.init,
-                      signed=False,
-                      boxed=False,
-                      rec_lossfn=args.rec_lossfn,
-                      predict_labels=args.predict_labels,
-                      indices='def',
-                      weights='equal',
-                      lr=args.rec_lr if args.rec_lr is not None else 1.0,
-                      optimizer='LBFGS',
-                      restarts=args.rec_restarts,
-                      max_iterations=500,
-                      total_variation=args.tv,
-                      filter='none',
-                      lr_decay=False,
-                      scoring_choice=args.scoring_choice)
+   
     # hash config
     config_comp = rec_config.copy()
     config_hash = hashlib.md5(json.dumps(config_comp, sort_keys=True).encode()).hexdigest()
@@ -165,11 +148,11 @@ if __name__ == "__main__":
         ground_truth_, label = validloader.dataset[target_id]
         if args.label_flip:
             label = random.randint(0, args.num_classes)
-        #if label not in labels:
-        #    ground_truth.append(ground_truth_.to(**setup))
-        #    labels.append(torch.as_tensor((label,), device=setup['device']))
-        ground_truth.append(ground_truth_.to(**setup))
-        labels.append(torch.as_tensor((label,), device=setup['device']))
+        if label not in labels:
+            ground_truth.append(ground_truth_.to(**setup))
+            labels.append(torch.as_tensor((label,), device=setup['device']))
+        #ground_truth.append(ground_truth_.to(**setup))
+        #labels.append(torch.as_tensor((label,), device=setup['device']))
         target_id += 1
     ground_truth = torch.stack(ground_truth)
     labels = torch.cat(labels)

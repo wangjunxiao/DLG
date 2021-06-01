@@ -223,6 +223,18 @@ def reconstruction_loss(parameters_trial, parameters, rec_lossfn='l2',
         indices = torch.arange(len(parameters))[-10:]
     elif indices == 'last50':
         indices = torch.arange(len(parameters))[-50:]
+    elif indices == 'fc':
+        indices = torch.arange(len(parameters))[-2:]
+    elif indices == 'rl':
+        indices = torch.arange(len(parameters))[:-2]
+    elif indices == 'first-conv':
+        indices = torch.arange(len(parameters))[:2]
+    elif indices == 'all-conv':
+        indices = torch.cat((torch.arange(len(parameters))[:-2:4], 
+                            torch.arange(len(parameters))[1:-2:4]), 0)
+    elif indices == 'last2-conv':
+        indices = torch.cat((torch.arange(len(parameters))[24:-2:4], 
+                            torch.arange(len(parameters))[25:-2:4]), 0)
     else:
         raise ValueError()
     

@@ -50,6 +50,11 @@ class ConvNet(torch.nn.Module):
             ('flatten', torch.nn.Flatten()),
             ('linear', torch.nn.Linear(36 * width, num_classes))
         ]))
-
+        #self.printmodel()
     def forward(self, input):
         return self.model(input)
+    
+    def printmodel(self):
+        print(self.model)
+        for name, param in self.model.named_parameters():
+            print(name)

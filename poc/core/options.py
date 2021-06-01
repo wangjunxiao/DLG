@@ -37,7 +37,6 @@ def parse_options():
     parser.add_argument('--local_loss', default='CrossEntropy', type=str, help='Choice of loss function for federated averaging.')
     
     parser.add_argument('--max_iterations', default=4800, type=int, help='Maximum number of iterations for reconstruction.')
-    parser.add_argument('--rec_method', default='InvertingGradients', type=str, help='Choice of reconstruction method.')
     parser.add_argument('--rec_optimizer', default='adam', type=str, help='Choice of optimizer used for reconstruction.')
     parser.add_argument('--rec_lossfn', default='sim', type=str, help='Choice of loss fn for reconstruction.')
     parser.add_argument('--rec_lr', default=0.1, type=str, help='Choice of learning rate used for reconstruction.')
