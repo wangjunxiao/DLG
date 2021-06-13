@@ -47,14 +47,15 @@ class ConvNet(torch.nn.Module):
             ('relu7', torch.nn.ReLU()),
 
             ('pool1', torch.nn.MaxPool2d(3)),
-            ('flatten', torch.nn.Flatten()),
-            ('linear', torch.nn.Linear(36 * width, num_classes))
+            ('flatten', torch.nn.Flatten())
+            #('linear', torch.nn.Linear(36 * width, num_classes))
         ]))
-        #self.printmodel()
+        self.linear = torch.nn.Linear(36 * width, num_classes)
+        self.feature = None
+
     def forward(self, input):
-        return self.model(input)
-    
-    def printmodel(self):
-        print(self.model)
-        for name, param in self.model.named_parameters():
-            print(name)
+        self.feature = self.model(input)
+        return self.linear(self.feature)
+
+    def extract_feature(self):
+        return self.feature

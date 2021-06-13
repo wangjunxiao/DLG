@@ -7,3 +7,4 @@
 /core/loader/network/__pycache__
 /core/reconstruction/__pycache__
 /core/trainer/__pycache__
+/core/defense/__pycache__

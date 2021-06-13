@@ -49,6 +49,10 @@ def parse_options():
     parser.add_argument('--signed', action='store_true', help='Use signed gradients.')
     parser.add_argument('--boxed', action='store_true', help='Use box constraints.')
     
+    # Defense parameters
+    parser.add_argument('--defense', action='store_true', help='Use a defense.')
+    parser.add_argument('--pruning_rate', default=60, type=float, help='pruning rate for defense.')
+    
     # Files and folders:
     parser.add_argument('--data_path', default='~/.torch', type=str)
     parser.add_argument('--save_image', action='store_true', help='Save the output to a file.')

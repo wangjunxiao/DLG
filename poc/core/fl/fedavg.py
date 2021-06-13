@@ -3,7 +3,6 @@
 import torch
 from collections import OrderedDict
 from .patch.module import PatchedModule
-from copy import deepcopy
 
 class FedAvg():
     def __init__(self, local_lr, local_loss, local_epochs, 
@@ -19,7 +18,7 @@ class FedAvg():
         """Take a few local gradient descent steps."""
         patched_model = PatchedModule(model)
         if self.use_updates:
-            patched_model_origin = deepcopy(patched_model)
+            patched_model_origin = PatchedModule(model)
         for epoch_id in range(self.local_epochs):
             for batch_id in range(input_data.shape[0] // self.local_batchsize):
                 log_probs = patched_model(input_data[batch_id * self.local_batchsize:

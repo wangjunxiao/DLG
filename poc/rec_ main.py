@@ -11,6 +11,7 @@ import core.loader.dataloader as dataloader
 import core.trainer.modeltrainer as modeltrainer
 from core.fl.fedavg import FedAvg
 from core.reconstruction.fedreconstructor import FedAvgRec
+from core.defense.perturbation import fc_perturb
 
 from collections import defaultdict
 import datetime
@@ -52,24 +53,27 @@ args.rec_restarts = 1
 args.scoring_choice = 'loss'
 args.target_id = 0 # image index in validation dataset
 
-args.num_images = 4
+args.num_images = 1
 args.local_epochs = 1
-args.local_batchsize = 4
+args.local_batchsize = 1
 args.local_lr = 1e-4
 args.local_loss = 'CrossEntropy'
 
-args.max_iterations = 500
+args.max_iterations = 1000
 args.rec_optimizer = 'adam'
 args.rec_lossfn = 'sim'
 args.rec_lr = 0.1
 args.predict_labels = True
 args.init = 'randn'
-args.indices = 'last2-conv'
+args.indices = 'def'
 args.weights = 'equal'
 
 args.tv = 1e-4
 args.signed = False
 args.boxed = False
+
+args.defense = True
+args.pruning_rate = 60
 
 args.data_path = '~/.torch'
 args.save_image = True
@@ -110,7 +114,7 @@ if __name__ == "__main__":
             modeltrainer.train_model(model, loss_fn, trainloader, validloader, args, setup=setup)
             torch.save(model.state_dict(), os.path.join(args.model_path, file))
     # Sanity check: Validate model accuracy
-    if args.sanity_check == True:
+    if args.sanity_check:
         training_stats = defaultdict(list)
         modeltrainer.validate_model(model, loss_fn, validloader, args, setup, training_stats)
         name, format = loss_fn.metric()
@@ -156,7 +160,8 @@ if __name__ == "__main__":
         target_id += 1
     ground_truth = torch.stack(ground_truth)
     labels = torch.cat(labels)
-
+    
+    ground_truth.requires_grad = True
 
     # Run reconstruction
     fedavg = FedAvg(local_lr=args.local_lr, local_loss=args.local_loss, 
@@ -166,6 +171,11 @@ if __name__ == "__main__":
                                    use_updates=True)
     parameters = fedavg.local_update(model=model, input_data=ground_truth, labels=labels) 
     parameters = [p.detach() for p in parameters]
+    
+    if args.defense:
+        #Run defense
+        parameters = fc_perturb(parameters=parameters, model=model, ground_truth=ground_truth, 
+                            pruning_rate=args.pruning_rate, setup=setup)
     
     # Run reconstruction in different precision?
     if args.dtype != 'float':

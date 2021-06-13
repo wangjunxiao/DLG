@@ -20,6 +20,8 @@ import os
 
 # Parse input arguments
 args = inversefed.options().parse_args()
+args.save_image = True
+args.target_id = 0
 # Parse training strategy
 defs = inversefed.training_strategy('conservative')
 defs.epochs = args.epochs
@@ -105,10 +107,16 @@ if __name__ == "__main__":
 
     input_gradient = torch.autograd.grad(target_loss, model.parameters())
     input_gradient = [grad.detach() for grad in input_gradient]
+    print('-------------------------------')
+    for graident in input_gradient:
+        print(graident.shape)
+    print('-------------------------------')
+    print(input_gradient[-2].shape)
+    print((torch.Tensor(mask)).shape)
+    print('-------------------------------')
     if args.model == 'LeNet' and args.defense == 'ours':
         input_gradient[8] = input_gradient[8] * torch.Tensor(mask).to(**setup)
     elif args.model == 'ConvNet' and args.defense == 'ours':
-        print(input_gradient[1])
         input_gradient[-2] = input_gradient[-2] * torch.Tensor(mask).to(**setup)
     if args.defense == 'prune':
         for i in range(len(input_gradient)):
@@ -129,7 +137,7 @@ if __name__ == "__main__":
                   lr=0.1,
                   optim=args.optimizer,
                   restarts=args.restarts,
-                  max_iterations=10,
+                  max_iterations=1000,
                   total_variation=args.tv,
                   init='randn',
                   filter='none',
