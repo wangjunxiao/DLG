@@ -23,13 +23,24 @@ def fc_perturb(parameters, model, ground_truth, pruning_rate, setup):
     parameters[-2] = parameters[-2] * torch.Tensor(mask).to(**setup)
     return parameters
 
-def prune(parameters, pruning_rate, setup):
+'''
+valid for all type of networks (perturb all layers)
+'''
+def prune_perturb(parameters, pruning_rate, setup):
     for i in range(len(parameters)):
             param_tensor = parameters[i].cpu().numpy()
             flattened_weights = np.abs(param_tensor.flatten())
             thresh = np.percentile(flattened_weights, pruning_rate)
             param_tensor = np.where(abs(param_tensor) < thresh, 0, param_tensor)
             parameters[i] = torch.Tensor(param_tensor).to(**setup)
-            
+    return parameters
 
-            
+'''
+valid for all type of networks (perturb all layers)
+'''
+def laplace_perturb(parameters, scale, setup):
+    for i in range(len(parameters)):
+        param_tensor = parameters[i].cpu().numpy()
+        param_tensor += np.random.laplace(0, scale, param_tensor.shape)
+        parameters[i] = torch.Tensor(param_tensor).to(**setup)
+    return parameters

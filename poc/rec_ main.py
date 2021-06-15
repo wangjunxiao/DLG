@@ -11,7 +11,7 @@ import core.loader.dataloader as dataloader
 import core.trainer.modeltrainer as modeltrainer
 from core.fl.fedavg import FedAvg
 from core.reconstruction.fedreconstructor import FedAvgRec
-from core.defense.perturbation import fc_perturb
+import core.defense.perturbation as perturbation
 
 from collections import defaultdict
 import datetime
@@ -174,8 +174,9 @@ if __name__ == "__main__":
     
     if args.defense:
         #Run defense
-        parameters = fc_perturb(parameters=parameters, model=model, ground_truth=ground_truth, 
-                            pruning_rate=args.pruning_rate, setup=setup)
+        parameters = perturbation.laplace_perturb(parameters=parameters,  
+                                                  scale=0.05, 
+                                                  setup=setup)
     
     # Run reconstruction in different precision?
     if args.dtype != 'float':

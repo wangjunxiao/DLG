@@ -1,0 +1,26 @@
+{
+    "clients": {
+        "total": 100,
+        "per_round": 10
+    },
+    "data": {
+        "loading": "static",
+        "partition": {
+            "size": 100
+        },
+        "IID": true
+    },
+    "federated_learning": {
+        "rounds": 200,
+        "target_accuracy": 0.99,
+        "task": "train",
+        "epochs": 1,
+        "batch_size": 4
+    },
+    "model": "CIFAR-10",
+    "paths": {
+        "data": "~/.torch",
+        "model": "./models"
+    },
+    "server": "basic"
+}
