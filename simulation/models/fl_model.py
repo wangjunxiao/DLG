@@ -4,8 +4,9 @@ import load_data
 import logging
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
-import torchvision
+from torchvision import datasets, transforms
 
 # Training settings
 lr = 0.01  # CHECKME
@@ -18,14 +19,14 @@ class Generator(load_data.Generator):  # CHECKME
 
     # Extract UNNAMED data using torchvision datasets
     def read(self, path):
-        self.trainset = torchvision.datasets.UNNAMED(
-            path, train=True, download=True, transform=torchvision.transforms.Compose([
+        self.trainset = datasets.UNNAMED(
+            path, train=True, download=True, transform=transforms.Compose([
                 """
                     Add transforms here...
                 """
             ]))
-        self.testset = torchvision.datasets.UNNAMED(
-            path, train=False, transform=torchvision.transforms.Compose([
+        self.testset = datasets.UNNAMED(
+            path, train=False, transform=transforms.Compose([
                 """
                     Add transforms here...
                 """
@@ -84,7 +85,7 @@ def train(model, trainloader, optimizer, epochs):  # CHECKME
 
             if batch_id % log_interval == 0:
                 logging.debug('Epoch: [{}/{}]\tLoss: {:.6f}'.format(
-                    epoch, epochs))
+                    epoch, epochs, loss.item()))
 
 
 def test(model, testloader):  # CHECKME

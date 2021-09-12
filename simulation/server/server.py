@@ -1,4 +1,4 @@
-import client
+import client as _client
 import load_data
 import logging
 import numpy as np
@@ -8,6 +8,7 @@ import sys
 from threading import Thread
 import torch
 import utils.dists as dists  # pylint: disable=no-name-in-module
+import math
 
 
 class Server(object):
@@ -56,7 +57,6 @@ class Server(object):
             'bias': load_data.BiasLoader(config, generator),
             'shard': load_data.ShardLoader(config, generator)
         }[self.config.loader]
-    
 
         logging.info('Loader: {}, IID: {}'.format(
             self.config.loader, self.config.data.IID))
@@ -96,7 +96,7 @@ class Server(object):
         for client_id in range(num_clients):
 
             # Create new client
-            new_client = client.Client(client_id)
+            new_client = _client.Client(client_id)
 
             if not IID:  # Configure clients for non-IID data
                 if self.config.data.bias:
@@ -156,7 +156,7 @@ class Server(object):
                 break
             
             logging.critical('{} {:.2f}\n'.format(round, 100 * accuracy))
-            
+
         if reports_path:
             with open(reports_path, 'wb') as f:
                 pickle.dump(self.saved_reports, f)
@@ -227,15 +227,15 @@ class Server(object):
                 self.loader.create_shards()
 
         # Configure selected clients for federated learning task
-        for client_ in sample_clients:
+        for client in sample_clients:
             if loading == 'dynamic':
-                self.set_client_data(client_)  # Send data partition to client
+                self.set_client_data(client)  # Send data partition to client
 
             # Extract config for client
             config = self.config
 
             # Continue configuraion on client
-            client_.configure(config)
+            client.configure(config)
 
     def reporting(self, sample_clients):
         # Recieve reports from sample clients
@@ -248,6 +248,96 @@ class Server(object):
 
     def aggregation(self, reports):
         return self.federated_averaging(reports)
+
+    # Report aggregation
+    def extract_client_updates(self, reports):
+        import fl_model  # pylint: disable=import-error
+
+        # Extract baseline model weights
+        baseline_weights = fl_model.extract_weights(self.model)
+
+        # Extract weights from reports
+        weights = [report.weights for report in reports]
+
+        # Calculate updates from weights
+        updates = []
+        for weight in weights:
+            update = []
+            for i, (name, weight) in enumerate(weight):
+                bl_name, baseline = baseline_weights[i]
+
+                # Ensure correct weight is being updated
+                assert name == bl_name
+
+                # Calculate update
+                delta = weight - baseline
+                update.append((name, delta))
+            update = self.laplace_perturb(parameters=update, 
+                                          scale=1e-4, 
+                                          model_type='mnist',
+                                          perturb_rate=0.5)
+            updates.append(update)
+
+        return updates
+
+    '''
+    valid for all type of networks (perturb all layers)
+    '''
+    def laplace_perturb(self, parameters, scale, model_type, perturb_rate):
+        all_layers = []
+        if model_type == 'mnist':
+            layer_conv1 = [0, 1] # conv1.weight torch.Size([20, 1, 5, 5])
+                                 # conv1.bias torch.Size([20])
+            all_layers.append(layer_conv1)                     
+            layer_conv2 = [2, 3] # conv2.weight torch.Size([50, 20, 5, 5])
+                                 # conv2.bias torch.Size([50])
+            all_layers.append(layer_conv2)    
+            layer_fc1 = [4, 5]   # fc1.weight torch.Size([500, 800])
+                                 # fc1.bias torch.Size([500])
+            all_layers.append(layer_fc1)    
+            layer_fc2 = [6, 7]   # fc2.weight torch.Size([10, 500])
+                                 # fc2.bias torch.Size([10])
+            all_layers.append(layer_fc2)    
+        if model_type == 'cifar-10':
+            layer_conv1 = [0, 1] # conv1.weight torch.Size([6, 3, 5, 5])
+                                 # conv1.bias torch.Size([6])
+            all_layers.append(layer_conv1)                     
+            layer_conv2 = [2, 3] # conv2.weight torch.Size([16, 6, 5, 5])
+                                 # conv2.bias torch.Size([16])
+            all_layers.append(layer_conv2)    
+            layer_fc1 = [4, 5]   # fc1.weight torch.Size([120, 400])
+                                 # fc1.bias torch.Size([120])
+            all_layers.append(layer_fc1)    
+            layer_fc2 = [6, 7]   # fc2.weight torch.Size([84, 120])
+                                 # fc2.bias torch.Size([84])
+            all_layers.append(layer_fc2)    
+            layer_fc3 = [8, 9]   # fc3.weight torch.Size([10, 84])
+                                 # fc3.bias torch.Size([10])
+            all_layers.append(layer_fc3) 
+            
+        select_result = self.layer_selector(M = len(all_layers), perturb_rate = perturb_rate)
+        perturb_param_layer = []
+        for result in select_result:
+            perturb_param_layer.extend(all_layers[result])
+        for i in perturb_param_layer:
+            (name, weight) = parameters[i]
+            weight = weight.cpu().numpy() 
+            weight += np.random.laplace(0, scale, weight.shape)
+            weight = torch.Tensor(weight)
+            parameters[i] = (name, weight)
+        return parameters
+    
+    def layer_selector(self, M, perturb_rate):
+        # random select K out of all M layers
+        K = max(1, math.floor(M*perturb_rate))
+        # Reservoir algorithm
+        data = list(range(M))
+        select_result = list(range(K))
+        for i in range(K,M):
+            r = random.randint(0,i)
+            if r < K:
+                select_result[r] = data[i]
+        return select_result
     
     def federated_averaging(self, reports):
         import fl_model  # pylint: disable=import-error
@@ -276,46 +366,7 @@ class Server(object):
             updated_weights.append((name, weight + avg_update[i]))
 
         return updated_weights
-    
-    # Report aggregation
-    def extract_client_updates(self, reports):
-        import fl_model  # pylint: disable=import-error
 
-        # Extract baseline model weights
-        baseline_weights = fl_model.extract_weights(self.model)
-
-        # Extract weights from reports
-        weights = [report.weights for report in reports]
-
-        # Calculate updates from weights
-        updates = []
-        for weight in weights:
-            update = []
-            for i, (name, weight) in enumerate(weight):
-                bl_name, baseline = baseline_weights[i]
-
-                # Ensure correct weight is being updated
-                assert name == bl_name
-
-                # Calculate update
-                delta = weight - baseline
-                update.append((name, delta))
-            #update = self.laplace_perturb(update, 0.05)
-            updates.append(update)
-        return updates
-    
-    '''
-    valid for all type of networks (perturb all layers)
-    '''
-    def laplace_perturb(self, parameters, scale):
-        for i in range(len(parameters)):
-            (name, weight) = parameters[i]
-            weight = weight.cpu().numpy() 
-            weight += np.random.laplace(0, scale, weight.shape)
-            weight = torch.Tensor(weight)
-            parameters[i] = (name, weight)
-        return parameters
-    
     def accuracy_averaging(self, reports):
         # Get total number of samples
         total_samples = sum([report.num_samples for report in reports])

@@ -6,20 +6,20 @@
     "data": {
         "loading": "static",
         "partition": {
-            "size": 100
+            "size": 600
         },
         "IID": true
     },
     "federated_learning": {
-        "rounds": 200,
+        "rounds": 10000,
         "target_accuracy": 0.99,
         "task": "train",
-        "epochs": 1,
-        "batch_size": 4
+        "epochs": 5,
+        "batch_size": 10
     },
     "model": "CIFAR-10",
     "paths": {
-        "data": "~/.torch",
+        "data": "./data",
         "model": "./models"
     },
     "server": "basic"

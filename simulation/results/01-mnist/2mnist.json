@@ -1,12 +1,12 @@
 {
     "clients": {
-        "total": 1000,
-        "per_round": 200
+        "total": 100,
+        "per_round": 10
     },
     "data": {
         "loading": "static",
         "partition": {
-            "range": [1,25]
+            "range": [1,10]
         },
         "IID": false,
         "bias": {
@@ -15,13 +15,13 @@
         }
     },
     "federated_learning": {
-        "rounds": 2000,
+        "rounds": 200,
         "target_accuracy": 0.99,
         "task": "train",
         "epochs": 2,
-        "batch_size": 25
+        "batch_size": 10
     },
-    "model": "CIFAR-10",
+    "model": "MNIST",
     "paths": {
         "data": "~/.torch",
         "model": "./models"

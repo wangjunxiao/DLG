@@ -99,7 +99,7 @@ class FedAvgRec():
         else:
             if self.rec_config['optimizer'] == 'adam':
                 optimizer = torch.optim.Adam([x_trial], lr=self.rec_config['lr'])
-            elif self.rec_config['optimizer'] == 'sgd':  # actually gd
+            elif self.rec_config['optimizer'] == 'SGD':  # actually gd
                 optimizer = torch.optim.SGD([x_trial], lr=0.01, momentum=0.9, nesterov=True)
             elif self.rec_config['optimizer'] == 'LBFGS':
                 optimizer = torch.optim.LBFGS([x_trial])

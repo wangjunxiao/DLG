@@ -1,44 +1,35 @@
 # -*- coding: utf-8 -*-
-import argparse
-
-from PIL import Image
+import time
+import numpy as np
 import matplotlib.pyplot as plt
-
 import torch
 import torch.nn.functional as F
-import torchvision
 from torchvision import datasets, transforms
-print(torch.__version__, torchvision.__version__)
+from _utils import label_to_onehot, cross_entropy_for_onehot
 
-from utils import label_to_onehot, cross_entropy_for_onehot
-
-parser = argparse.ArgumentParser(description='Deep Leakage from Gradients.')
-parser.add_argument('--index', type=int, default="25",
-                    help='the index for leaking images on CIFAR.')
-parser.add_argument('--image', type=str,default="",
-                    help='the path to customized image.')
-args = parser.parse_args()
+# config
+Iteration = 100
+LogInterval = Iteration/10
+ImgIndex = 25 # the index for leaking images on CIFAR100
+perturb = False
 
 device = "cpu"
 if torch.cuda.is_available():
     device = "cuda"
 print("Running on %s" % device)
 
+torch.cuda.empty_cache()
+
 dst = datasets.CIFAR100("~/.torch", download=True)
 tt = transforms.ToTensor()
 tp = transforms.ToPILImage()
 
-img_index = args.index
-gt_data = tt(dst[img_index][0]).to(device)
+gt_data = tt(dst[ImgIndex][0]).to(device)
 
-if len(args.image) > 1:
-    gt_data = Image.open(args.image)
-    gt_data = tt(gt_data).to(device)
-
-print ("image index:", img_index, "image size:", *gt_data.size())
+print ("image index:", ImgIndex, "image size:", *gt_data.size())
 gt_data = gt_data.view(1, *gt_data.size())
 
-gt_label = torch.Tensor([dst[img_index][1]]).long().to(device)
+gt_label = torch.Tensor([dst[ImgIndex][1]]).long().to(device)
 gt_label = gt_label.view(1, )
 gt_onehot_label = label_to_onehot(gt_label)
 
@@ -59,6 +50,14 @@ dy_dx = torch.autograd.grad(y, net.parameters())
 
 original_dy_dx = list((_.detach().clone() for _ in dy_dx))
 
+# perturb
+if perturb:
+    for i in range(len(original_dy_dx)):
+        gradient_tensor = original_dy_dx[i].cpu().numpy() 
+        gradient_tensor += np.random.laplace(0, 1e-4, gradient_tensor.shape)
+        gradient_tensor = torch.Tensor(gradient_tensor).to(device)
+        original_dy_dx[i] = gradient_tensor
+
 # generate dummy data and label
 dummy_data = torch.randn(gt_data.size()).to(device).requires_grad_(True)
 dummy_label = torch.randn(gt_onehot_label.size()).to(device).requires_grad_(True)
@@ -68,7 +67,7 @@ plt.imshow(tp(dummy_data[0].cpu()))
 optimizer = torch.optim.LBFGS([dummy_data, dummy_label])
 
 history = []
-for iters in range(50):
+for iters in range(Iteration):
     def closure():
         optimizer.zero_grad()
 
@@ -85,16 +84,19 @@ for iters in range(50):
         return grad_diff
     
     optimizer.step(closure)
-    if iters % 10 == 0: 
+    if iters % LogInterval == 0: 
         current_loss = closure()
         print(iters, "%.4f" % current_loss.item())
         history.append(tp(dummy_data[0].cpu()))
 
-plt.figure(figsize=(12, 8))
-for i in range(5):
-    plt.subplot(3, 10, i + 1)
-    plt.imshow(history[i])
-    plt.title("iter=%d" % (i * 10))
-    plt.axis('off')
-
-plt.show()
+plot_num = Iteration/LogInterval
+plot_row = 2
+plot_col = plot_num/plot_row
+fig, axs = plt.subplots(plot_row, int(plot_col), figsize=(12.6, 4))
+for r in range(plot_row):
+    for i in range(int(plot_col)):
+        axs[r][i].imshow(history[int(r*plot_col+i)])
+        axs[r][i].set_title("iter=%d" % ((r*plot_col+i) * LogInterval))
+        axs[r][i].set_xticks([])
+        axs[r][i].set_yticks([])
+fig.savefig((time.strftime("%m-%d %Hh%Mm%Ss", time.localtime())+'.pdf').replace('\\','/'))

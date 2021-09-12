@@ -44,3 +44,10 @@ def laplace_perturb(parameters, scale, setup):
         param_tensor += np.random.laplace(0, scale, param_tensor.shape)
         parameters[i] = torch.Tensor(param_tensor).to(**setup)
     return parameters
+
+def laplace_perturb2(parameters, scale, setup, perturb_layers):
+    for i in perturb_layers:
+        param_tensor = parameters[i].cpu().numpy()
+        param_tensor += np.random.laplace(0, scale, param_tensor.shape)
+        parameters[i] = torch.Tensor(param_tensor).to(**setup)
+    return parameters

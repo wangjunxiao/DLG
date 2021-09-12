@@ -51,15 +51,14 @@ args.label_flip = False
 
 args.rec_restarts = 1
 args.scoring_choice = 'loss'
-args.target_id = 0 # image index in validation dataset
-
+args.target_id = 12 # image index in validation dataset
 args.num_images = 1
 args.local_epochs = 1
 args.local_batchsize = 1
-args.local_lr = 1e-4
+args.local_lr = 1e-2
 args.local_loss = 'CrossEntropy'
 
-args.max_iterations = 1000
+args.max_iterations = 800
 args.rec_optimizer = 'adam'
 args.rec_lossfn = 'sim'
 args.rec_lr = 0.1
@@ -73,7 +72,7 @@ args.signed = False
 args.boxed = False
 
 args.defense = True
-args.pruning_rate = 60
+args.pruning_rate = 70
 
 args.data_path = '~/.torch'
 args.save_image = True
@@ -85,6 +84,8 @@ if args.deterministic:
 
 
 if __name__ == "__main__":
+    torch.cuda.empty_cache()
+    
     # Choose GPU device and print status information:
     setup = core.utils.system_startup()
     start_time = time.time()
@@ -169,15 +170,19 @@ if __name__ == "__main__":
                                    local_batchsize=args.local_batchsize,
                                    setup=setup,
                                    use_updates=True)
+    
     parameters = fedavg.local_update(model=model, input_data=ground_truth, labels=labels) 
     parameters = [p.detach() for p in parameters]
     
     if args.defense:
         #Run defense
-        parameters = perturbation.laplace_perturb(parameters=parameters,  
-                                                  scale=0.05, 
-                                                  setup=setup)
-    
+        parameters = perturbation.fc_perturb(parameters=parameters,  
+                                             model=model,
+                                             ground_truth=ground_truth,
+                                             pruning_rate=args.pruning_rate,
+                                             setup=setup)
+                                                  
+        
     # Run reconstruction in different precision?
     if args.dtype != 'float':
         if args.dtype in ['double', 'float64']:

@@ -1,5 +1,6 @@
 import logging
 import random
+from torchvision import datasets, transforms
 import utils.dists as dists
 
 

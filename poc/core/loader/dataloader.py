@@ -49,11 +49,14 @@ def load_dataset(dataset, data_path, batchsize=128, augmentations=True, shuffle=
         loss_fn = Classification()
         dm = mnist_mean
         ds = mnist_std
-    elif dataset == 'MNIST_GRAY':
-        trainset, validset = _build_mnist_gray(path, augmentations, normalize)
+    elif dataset == 'Fashion-MNIST':
+        trainset, validset = _build_fashion_mnist(path, augmentations, normalize)
         loss_fn = Classification()
         dm = mnist_mean
         ds = mnist_std
+    elif dataset == 'MNIST_GRAY':
+        trainset, validset = _build_mnist_gray(path, augmentations, normalize)
+        loss_fn = Classification()
     elif dataset == 'ImageNet':
         trainset, validset = _build_imagenet(path, augmentations, normalize)
         loss_fn = Classification()
@@ -137,7 +140,6 @@ def _build_cifar100(data_path, augmentations=True, normalize=True):
 
     return trainset, validset
 
-
 def _build_mnist(data_path, augmentations=True, normalize=True):
     """Define MNIST with everything considered."""
     # Load data
@@ -167,7 +169,32 @@ def _build_mnist(data_path, augmentations=True, normalize=True):
 
     return trainset, validset
 
+def _build_fashion_mnist(data_path, augmentations=True, normalize=True):
+    # Load data
+    trainset = torchvision.datasets.FashionMNIST(root=data_path, train=True, download=True, transform=transforms.ToTensor())
+    validset = torchvision.datasets.FashionMNIST(root=data_path, train=False, download=True, transform=transforms.ToTensor())
 
+    cc = torch.cat([trainset[i][0].reshape(-1) for i in range(len(trainset))], dim=0)
+    data_mean = (torch.mean(cc, dim=0).item(),)
+    data_std = (torch.std(cc, dim=0).item(),)
+    print(data_mean, data_mean)
+    
+    # Organize preprocessing
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(data_mean, data_std) if normalize else transforms.Lambda(lambda x: x)])
+    if augmentations:
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(28, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transform])
+        trainset.transform = transform_train
+    else:
+        trainset.transform = transform
+    validset.transform = transform
+
+    return trainset, validset
+        
 def _build_mnist_gray(data_path, augmentations=True, normalize=True):
     """Define MNIST with everything considered."""
     # Load data
@@ -210,6 +237,8 @@ def _build_imagenet(data_path, augmentations=True, normalize=True):
         data_mean, data_std = _get_meanstd(trainset)
     else:
         data_mean, data_std = imagenet_mean, imagenet_std
+    
+    data_mean, data_std = imagenet_mean, imagenet_std
 
     # Organize preprocessing
     transform = transforms.Compose([
@@ -228,7 +257,7 @@ def _build_imagenet(data_path, augmentations=True, normalize=True):
         trainset.transform = transform
     validset.transform = transform
 
-    return trainset, validset
+    return validset, validset
 
 
 def _get_meanstd(trainset):
@@ -236,8 +265,6 @@ def _get_meanstd(trainset):
     data_mean = torch.mean(cc, dim=1).tolist()
     data_std = torch.std(cc, dim=1).tolist()
     return data_mean, data_std
-
-
 
 
 

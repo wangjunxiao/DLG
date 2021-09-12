@@ -88,7 +88,7 @@ class Client(object):
     # Machine learning tasks
     def train(self):
         import fl_model  # pylint: disable=import-error
-        
+
         logging.info('Training on client #{}'.format(self.client_id))
 
         # Perform model training

@@ -23,8 +23,10 @@ def load_model(model, seed=None, num_classes=10, num_channels=3):
         model_init_seed = seed
     utils.set_random_seed(model_init_seed)
 
-    if model == 'ConvNet64':
+    if model == 'ConvNet64': # MNIST CIFAR10 CIFAR100
         model = ConvNet(width=64, num_channels=num_channels, num_classes=num_classes)
+    elif model == 'ConvNet4096': # MNIST CIFAR10 CIFAR100
+        model = ConvNet(width=4096, num_channels=num_channels, num_classes=num_classes)
     elif model == 'ConvNet8':
         model = ConvNet(width=8, num_channels=num_channels, num_classes=num_classes)
     elif model == 'ConvNet16':
