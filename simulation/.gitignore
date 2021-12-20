@@ -1,1 +1,6 @@
 __pycache__
+model/CIFAR-10/__pycache__
+model/FashionMNIST/__pycache__
+model/MNIST/__pycache__
+server/__pycache__
+utils/__pycache__

@@ -1,8 +1,4 @@
 """Various utilities."""
-
-import os
-import csv
-
 import torch
 import random
 import numpy as np
@@ -27,7 +23,6 @@ def system_startup(args=None):
         print(args)
         print('-------------------------------')
     return setup
-
 
 
 def set_deterministic():

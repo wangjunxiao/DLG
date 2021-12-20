@@ -9,7 +9,6 @@ from .scheduler import GradualWarmupScheduler
 NON_BLOCKING = False
 
 
-
 def train_model(model, loss_fn, trainloader, validloader, args, setup=dict(dtype=torch.float, device=torch.device('cpu'))):
     """Run the main interface. Train a network with specifications from the Strategy object."""
     stats = defaultdict(list)

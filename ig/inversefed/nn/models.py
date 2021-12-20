@@ -14,8 +14,6 @@ import numpy as np
 from ..utils import set_random_seed
 
 
-
-
 def construct_model(model, num_classes=10, seed=None, num_channels=3):
     """Return various models."""
     if seed is None:
