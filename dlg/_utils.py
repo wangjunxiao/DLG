@@ -1,7 +1,6 @@
 import torch
 import torch.nn.functional as F
 
-
 def label_to_onehot(target, num_classes=100):
     target = torch.unsqueeze(target, 1)
     onehot_target = torch.zeros(target.size(0), num_classes, device=target.device)

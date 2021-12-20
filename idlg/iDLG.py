@@ -84,8 +84,8 @@ def main():
     dataset = 'cifar100'
     data_path = '~/.torch'
     # on linux, dataset/lfw-deepfunneled
-    lfw_path = os.path.join(os.path.abspath('../../'), 'dataset\lfw-deepfunneled')
-    save_path = 'results\iDLG_%s'%dataset
+    lfw_path = os.path.join(os.path.abspath('../../'), 'dataset/lfw-deepfunneled')
+    save_path = 'results/iDLG_%s'%dataset
     
     lr = 1.0
     num_dummy = 1
